@@ -1,0 +1,23 @@
+{
+  "Records": [
+    {
+      "eventVersion": "2.0",
+      "eventSource": "aws:s3",
+      "awsRegion": "us-east-1",
+      "eventTime": "2025-08-05T19:46:25.000Z",
+      "eventName": "ObjectCreated:Put",
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "test",
+        "bucket": {
+          "name": "hismart-clinical-data-520754296204-us-east-1",
+          "arn": "arn:aws:s3:::hismart-clinical-data-520754296204-us-east-1"
+        },
+        "object": {
+          "key": "uploads/1754433983737-ejemplo_notas_clinicas_1946.csv",
+          "size": 5616
+        }
+      }
+    }
+  ]
+}

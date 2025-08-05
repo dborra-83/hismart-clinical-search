@@ -1,0 +1,2 @@
+id_paciente,fecha_nota,medico,especialidad,tipo_consulta,contenido_nota,diagnosticos,medicamentos
+99999,2024-01-26,Dr. Test Automatico,Medicina Interna,consulta_externa,"Paciente de prueba para verificar procesamiento automático de CSV. Esta nota fue creada para probar el trigger S3 a Lambda. El paciente presenta síntomas menores y se encuentra estable.",Prueba automatización,Ninguno

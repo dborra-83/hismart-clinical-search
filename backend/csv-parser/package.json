@@ -9,7 +9,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "aws-sdk": "^2.1469.0",
     "@aws-sdk/client-dynamodb": "^3.441.0",
     "@aws-sdk/lib-dynamodb": "^3.441.0",
     "@aws-sdk/client-s3": "^3.441.0",
