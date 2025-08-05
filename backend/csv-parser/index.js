@@ -1,4 +1,3 @@
-const AWS = require('aws-sdk');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -15,8 +14,8 @@ const s3Client = new S3Client({ region: process.env.AWS_REGION });
 const bedrockClient = new BedrockRuntimeClient({ region: process.env.BEDROCK_REGION || process.env.AWS_REGION });
 
 // Variables de entorno
-const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME;
-const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+const TABLE_NAME = process.env.TABLE_NAME;
+const BUCKET_NAME = process.env.BUCKET_NAME;
 const BEDROCK_MODEL_ID = 'anthropic.claude-3-sonnet-20240229-v1:0';
 
 /**
@@ -244,10 +243,8 @@ async function processCsvRow(row, columnMapping, sourceFile, rowNumber) {
         console.warn('Error generando resumen IA:', error.message);
     }
     
-    // Crear objeto de nota clínica
+    // Crear objeto de nota clínica (schema simplificado)
     const notaClinica = {
-        PK: `NOTE#${noteId}`,
-        SK: 'METADATA',
         id: noteId,
         paciente_id: String(pacienteId),
         fecha_nota: fechaNormalizada,
@@ -264,7 +261,7 @@ async function processCsvRow(row, columnMapping, sourceFile, rowNumber) {
         fila_origen: rowNumber,
         fecha_carga: new Date().toISOString(),
         estado: 'procesado',
-        version: '1.0'
+        timestamp: new Date().toISOString()
     };
     
     // Guardar en DynamoDB
@@ -371,8 +368,9 @@ async function checkForDuplicate(pacienteId, fecha, contenido) {
     try {
         const command = new QueryCommand({
             TableName: TABLE_NAME,
-            IndexName: 'GSI-PacienteId-Fecha',
-            KeyConditionExpression: 'paciente_id = :paciente_id AND fecha_nota = :fecha_nota',
+            IndexName: 'paciente-index',
+            KeyConditionExpression: 'paciente_id = :paciente_id',
+            FilterExpression: 'fecha_nota = :fecha_nota',
             ExpressionAttributeValues: {
                 ':paciente_id': String(pacienteId),
                 ':fecha_nota': fecha
@@ -470,7 +468,7 @@ async function saveNoteToDynamoDB(notaClinica) {
     const command = new PutCommand({
         TableName: TABLE_NAME,
         Item: notaClinica,
-        ConditionExpression: 'attribute_not_exists(PK)' // Evitar sobrescribir
+        ConditionExpression: 'attribute_not_exists(id)' // Evitar sobrescribir usando id como PK
     });
     
     try {

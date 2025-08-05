@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -264,6 +265,19 @@ export class HiSmartSimpleStack extends cdk.Stack {
     testResource.addMethod('GET', new apigateway.LambdaIntegration(testLambda), {
       authorizationType: apigateway.AuthorizationType.NONE
     });
+
+    // 8. Configure S3 Trigger for automatic CSV processing
+    clinicalDataBucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(csvParserFunction),
+      {
+        prefix: 'uploads/',
+        suffix: '.csv'
+      }
+    );
+
+    // Grant additional permissions for S3 trigger
+    clinicalDataBucket.grantRead(csvParserFunction);
 
     // 7. Outputs
     new cdk.CfnOutput(this, 'UserPoolId', {
