@@ -1,0 +1,17 @@
+{
+  "PK": {"S": "NOTE#550e8400-e29b-41d4-a716-446655440001"},
+  "SK": {"S": "METADATA"},
+  "id": {"S": "550e8400-e29b-41d4-a716-446655440001"},
+  "paciente_id": {"S": "12345"},
+  "fecha_nota": {"S": "2025-01-15"},
+  "medico": {"S": "Dr. María González"},
+  "especialidad": {"S": "Cardiología"},
+  "tipo_consulta": {"S": "Control"},
+  "contenido": {"S": "Paciente de 65 años con hipertensión arterial controlada. Presenta mejoría en los niveles de presión arterial tras ajuste de medicación. Sin síntomas actuales."},
+  "diagnosticos": {"SS": ["Hipertensión arterial"]},
+  "medicamentos": {"SS": ["Losartán 50mg"]},
+  "fecha_creacion": {"S": "2025-08-05T01:00:00Z"},
+  "fecha_modificacion": {"S": "2025-08-05T01:00:00Z"},
+  "creado_por": {"S": "admin@hismart.dev"},
+  "estado": {"S": "activa"}
+}

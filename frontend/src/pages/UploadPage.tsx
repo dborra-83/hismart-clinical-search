@@ -28,6 +28,7 @@ import { useDropzone } from 'react-dropzone';
 
 import { useBranding } from '../contexts/BrandingContext';
 import { useAuth } from '../contexts/AuthContext';
+import { getUploadUrl } from '../services/api';
 
 interface UploadedFile {
   id: string;
@@ -65,7 +66,7 @@ const UploadPage: React.FC = () => {
       };
 
       setFiles(prev => [...prev, uploadFile]);
-      simulateUpload(fileId, file);
+      uploadFile(fileId, file);
     });
   }, []);
 
@@ -77,42 +78,53 @@ const UploadPage: React.FC = () => {
     multiple: true
   });
 
-  const simulateUpload = async (fileId: string, file: File) => {
-    setUploading(true);
+  const uploadFile = async (fileId: string, file: File) => {
+    try {
+      setUploading(true);
+      updateFile(fileId, { status: 'uploading', progress: 0 });
 
-    // Simular progreso de upload
-    for (let progress = 0; progress <= 100; progress += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      updateFile(fileId, { progress });
-    }
+      // 1. Obtener URL presignada
+      const uploadUrlResponse = await getUploadUrl({ filename: file.name });
+      const { upload_url, file_key } = uploadUrlResponse;
 
-    // Cambiar a estado de procesamiento
-    updateFile(fileId, { status: 'processing', progress: 0 });
+      // 2. Subir archivo a S3 usando la URL presignada
+      updateFile(fileId, { progress: 10 });
 
-    // Simular procesamiento
-    for (let progress = 0; progress <= 100; progress += 5) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      updateFile(fileId, { progress });
-    }
-
-    // Simular resultado final
-    const success = Math.random() > 0.2; // 80% de éxito
-    if (success) {
-      updateFile(fileId, {
-        status: 'completed',
-        progress: 100,
-        processed: Math.floor(Math.random() * 100) + 50,
-        errors: Math.floor(Math.random() * 5)
+      const response = await fetch(upload_url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': 'text/csv'
+        }
       });
-    } else {
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      }
+
+      updateFile(fileId, { progress: 100, status: 'processing' });
+
+      // 3. El procesamiento será automático via S3 trigger -> Lambda
+      // Simular un delay para mostrar estado de procesamiento
+      setTimeout(() => {
+        updateFile(fileId, {
+          status: 'completed',
+          progress: 100,
+          processed: 'Procesado por Lambda'
+        });
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
       updateFile(fileId, {
         status: 'error',
         progress: 100,
+        processed: 0,
         errors: 1
       });
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
   };
 
   const updateFile = (id: string, updates: Partial<UploadedFile>) => {
@@ -237,8 +249,11 @@ const UploadPage: React.FC = () => {
               </Paper>
 
               <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  <strong>Formato esperado:</strong><br />
+                <Typography variant="body2" component="div">
+                  <Typography component="span" sx={{ fontWeight: 'bold' }}>
+                    Formato esperado:
+                  </Typography>
+                  <br />
                   ID_Paciente, Fecha_Nota, Medico, Especialidad, Tipo_Consulta, Contenido_Nota, Diagnosticos, Medicamentos
                 </Typography>
               </Alert>

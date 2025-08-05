@@ -1,0 +1,16 @@
+{
+  "Records": [
+    {
+      "eventSource": "aws:s3",
+      "eventName": "ObjectCreated:Put",
+      "s3": {
+        "bucket": {
+          "name": "hismart-clinical-data-520754296204-us-east-1"
+        },
+        "object": {
+          "key": "uploads/test_notas.csv"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "PK": {"S": "NOTE#550e8400-e29b-41d4-a716-446655440002"},
+  "SK": {"S": "METADATA"},
+  "id": {"S": "550e8400-e29b-41d4-a716-446655440002"},
+  "paciente_id": {"S": "23456"},
+  "fecha_nota": {"S": "2025-01-16"},
+  "medico": {"S": "Dr. Juan Pérez"},
+  "especialidad": {"S": "Neurología"},
+  "tipo_consulta": {"S": "Consulta"},
+  "contenido": {"S": "Paciente refiere cefaleas recurrentes de 3 semanas de evolución. Examen neurológico normal. Se solicita resonancia magnética cerebral."},
+  "diagnosticos": {"SS": ["Cefalea primaria"]},
+  "medicamentos": {"SS": ["Ibuprofeno 400mg"]},
+  "fecha_creacion": {"S": "2025-08-05T01:00:00Z"},
+  "fecha_modificacion": {"S": "2025-08-05T01:00:00Z"},
+  "creado_por": {"S": "medico1@hismart.dev"},
+  "estado": {"S": "activa"}
+}

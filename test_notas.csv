@@ -1,0 +1,6 @@
+ID_Paciente,Fecha_Nota,Medico,Especialidad,Tipo_Consulta,Contenido_Nota,Diagnosticos,Medicamentos
+12345,2025-01-15,Dr. María González,Cardiología,Control,"Paciente de 65 años con hipertensión arterial controlada. Presenta mejoría en los niveles de presión arterial tras ajuste de medicación. Sin síntomas actuales.",Hipertensión arterial,Losartán 50mg
+23456,2025-01-16,Dr. Juan Pérez,Neurología,Consulta,"Paciente refiere cefaleas recurrentes de 3 semanas de evolución. Examen neurológico normal. Se solicita resonancia magnética cerebral.",Cefalea primaria,Ibuprofeno 400mg
+34567,2025-01-17,Dra. Ana López,Pediatría,Urgencia,"Niño de 8 años con fiebre de 39°C y dolor abdominal. Examen físico sugiere apendicitis aguda. Se deriva a cirugía.",Apendicitis aguda,Paracetamol
+45678,2025-01-18,Dr. Carlos Ruiz,Traumatología,Control,"Seguimiento post-quirúrgico de fractura de radio. Consolidación ósea adecuada. Paciente sin dolor, movilidad completa recuperada.",Fractura de radio consolidada,Ninguno
+56789,2025-01-19,Dra. Elena Martín,Ginecología,Rutina,"Control ginecológico anual. Citología cervical normal. Exploración mamaria sin hallazgos patológicos. Se recomienda mamografía.",Sin hallazgos,Ninguno
