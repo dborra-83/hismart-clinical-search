@@ -371,10 +371,10 @@ const SearchPage: React.FC = () => {
                             <Typography variant="caption" color="text.secondary">
                               Diagnósticos:
                             </Typography>
-                            {result.diagnosticos.map((dx, idx) => (
+                            {Array.isArray(result.diagnosticos) && result.diagnosticos.map((dx, idx) => (
                               <Chip
                                 key={idx}
-                                label={dx}
+                                label={String(dx)}
                                 size="small"
                                 variant="outlined"
                                 color="primary"
@@ -386,10 +386,10 @@ const SearchPage: React.FC = () => {
                             <Typography variant="caption" color="text.secondary">
                               Medicamentos:
                             </Typography>
-                            {result.medicamentos.map((med, idx) => (
+                            {Array.isArray(result.medicamentos) && result.medicamentos.map((med, idx) => (
                               <Chip
                                 key={idx}
-                                label={med}
+                                label={String(med)}
                                 size="small"
                                 variant="outlined"
                                 color="secondary"

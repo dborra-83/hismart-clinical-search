@@ -76,6 +76,17 @@ const NotesPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           console.log('Notes API response:', data);
+          console.log('Individual notes:', data.notas);
+          
+          // Debug each note
+          if (data.notas && Array.isArray(data.notas)) {
+            data.notas.forEach((note: any, index: number) => {
+              console.log(`Note ${index}:`, note);
+              console.log(`Note ${index} diagnosticos:`, note.diagnosticos, typeof note.diagnosticos);
+              console.log(`Note ${index} medicamentos:`, note.medicamentos, typeof note.medicamentos);
+            });
+          }
+          
           setNotes(data.notas || []);
         } else {
           console.error('Failed to load notes:', response.status);
@@ -299,20 +310,20 @@ const NotesPage: React.FC = () => {
               <TableBody>
                 {paginatedNotes.map((note) => (
                   <TableRow key={note.id} hover>
-                    <TableCell>{note.paciente_id}</TableCell>
+                    <TableCell>{String(note.paciente_id)}</TableCell>
                     <TableCell>
                       {new Date(note.fecha_nota).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>{note.medico}</TableCell>
+                    <TableCell>{String(note.medico)}</TableCell>
                     <TableCell>
-                      <Chip label={note.especialidad} size="small" variant="outlined" />
+                      <Chip label={String(note.especialidad)} size="small" variant="outlined" />
                     </TableCell>
                     <TableCell>
                       <Box display="flex" flexWrap="wrap" gap={0.5}>
-                        {note.diagnosticos.slice(0, 2).map((dx, idx) => (
-                          <Chip key={idx} label={dx} size="small" />
+                        {Array.isArray(note.diagnosticos) && note.diagnosticos.slice(0, 2).map((dx, idx) => (
+                          <Chip key={idx} label={String(dx)} size="small" />
                         ))}
-                        {note.diagnosticos.length > 2 && (
+                        {Array.isArray(note.diagnosticos) && note.diagnosticos.length > 2 && (
                           <Chip
                             label={`+${note.diagnosticos.length - 2}`}
                             size="small"
@@ -415,8 +426,8 @@ const NotesPage: React.FC = () => {
                   Diagnósticos:
                 </Typography>
                 <Box display="flex" flexWrap="wrap" gap={1}>
-                  {selectedNote.diagnosticos.map((dx, idx) => (
-                    <Chip key={idx} label={dx} color="primary" />
+                  {Array.isArray(selectedNote.diagnosticos) && selectedNote.diagnosticos.map((dx, idx) => (
+                    <Chip key={idx} label={String(dx)} color="primary" />
                   ))}
                 </Box>
               </Box>
@@ -426,8 +437,8 @@ const NotesPage: React.FC = () => {
                   Medicamentos:
                 </Typography>
                 <Box display="flex" flexWrap="wrap" gap={1}>
-                  {selectedNote.medicamentos.map((med, idx) => (
-                    <Chip key={idx} label={med} color="secondary" />
+                  {Array.isArray(selectedNote.medicamentos) && selectedNote.medicamentos.map((med, idx) => (
+                    <Chip key={idx} label={String(med)} color="secondary" />
                   ))}
                 </Box>
               </Box>
