@@ -48,10 +48,30 @@ const UploadPage: React.FC = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    console.log('Files dropped:', { acceptedFiles, rejectedFiles });
+    
+    // Mostrar información sobre archivos rechazados
+    if (rejectedFiles.length > 0) {
+      rejectedFiles.forEach((rejection) => {
+        console.log('Rejected file:', rejection.file.name, 'Errors:', rejection.errors);
+        rejection.errors.forEach((error: any) => {
+          console.log('Error details:', error);
+        });
+      });
+    }
+    
     acceptedFiles.forEach((file) => {
-      if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-        alert('Solo se permiten archivos CSV');
+      console.log('Processing file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified
+      });
+      
+      // Validación más flexible - solo verificar extensión
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        alert(`El archivo "${file.name}" no tiene extensión .csv`);
         return;
       }
 
@@ -73,18 +93,33 @@ const UploadPage: React.FC = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'text/csv': ['.csv']
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.csv'],
+      'text/plain': ['.csv'],
+      'application/csv': ['.csv'],
+      'text/comma-separated-values': ['.csv']
     },
-    multiple: true
+    multiple: true,
+    noClick: false,
+    noKeyboard: false
   });
 
   const uploadFile = async (fileId: string, file: File) => {
+    console.log('=== INICIANDO UPLOAD ===');
+    console.log('File details:', {
+      id: fileId,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: new Date(file.lastModified).toISOString()
+    });
+
     try {
       setUploading(true);
       updateFile(fileId, { status: 'uploading', progress: 0 });
 
       // 1. Obtener URL presignada usando fetch directo
-      console.log('Getting upload URL for:', file.name);
+      console.log('Step 1: Getting upload URL for:', file.name);
       const urlResponse = await fetch('https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/upload/csv', {
         method: 'POST',
         headers: {
@@ -93,14 +128,22 @@ const UploadPage: React.FC = () => {
         body: JSON.stringify({ filename: file.name })
       });
 
+      console.log('Upload URL response status:', urlResponse.status);
+      console.log('Upload URL response headers:', Object.fromEntries(urlResponse.headers.entries()));
+
       if (!urlResponse.ok) {
-        throw new Error(`Failed to get upload URL: ${urlResponse.status}`);
+        const errorText = await urlResponse.text();
+        console.error('Upload URL error:', errorText);
+        throw new Error(`Failed to get upload URL: ${urlResponse.status} - ${errorText}`);
       }
 
       const uploadUrlResponse = await urlResponse.json();
+      console.log('Upload URL response data:', uploadUrlResponse);
       const { upload_url, file_key } = uploadUrlResponse;
 
       // 2. Subir archivo a S3 usando la URL presignada
+      console.log('Step 2: Uploading to S3 with URL:', upload_url.substring(0, 100) + '...');
+      console.log('File key:', file_key);
       updateFile(fileId, { progress: 10 });
 
       const uploadResponse = await fetch(upload_url, {
@@ -111,30 +154,43 @@ const UploadPage: React.FC = () => {
         }
       });
 
+      console.log('S3 upload response status:', uploadResponse.status);
+      console.log('S3 upload response headers:', Object.fromEntries(uploadResponse.headers.entries()));
+
       if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+        const errorText = await uploadResponse.text();
+        console.error('S3 upload error:', errorText);
+        throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`);
       }
 
+      console.log('Step 3: Upload successful! File uploaded to S3:', file_key);
       updateFile(fileId, { progress: 100, status: 'processing' });
 
       // 3. El procesamiento será automático via S3 trigger -> Lambda
-      // Simular un delay para mostrar estado de procesamiento
+      console.log('Step 4: Waiting for automatic processing...');
       setTimeout(() => {
         updateFile(fileId, {
           status: 'completed',
           progress: 100,
           processed: 5
         });
+        console.log('Upload and processing completed for:', file.name);
       }, 3000);
 
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error('=== ERROR EN UPLOAD ===');
+      console.error('Error details:', error);
+      console.error('File that failed:', file.name);
+      
       updateFile(fileId, {
         status: 'error',
         progress: 100,
         processed: 0,
         errors: 1
       });
+      
+      // Mostrar error al usuario
+      alert(`Error subiendo el archivo "${file.name}": ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setUploading(false);
     }

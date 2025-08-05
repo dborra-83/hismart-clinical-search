@@ -133,16 +133,52 @@ async function processCsvFile(bucketName, objectKey) {
 }
 
 /**
- * Parsea el contenido CSV usando csv-parser
+ * Detecta automáticamente el separador CSV
+ */
+function detectCsvSeparator(csvContent) {
+    const lines = csvContent.split('\n').slice(0, 3); // Analizar primeras 3 líneas
+    const separators = [',', ';', '\t', '|'];
+    
+    for (const separator of separators) {
+        let consistentCount = null;
+        let isConsistent = true;
+        
+        for (const line of lines) {
+            if (line.trim() === '') continue;
+            
+            const count = line.split(separator).length - 1;
+            if (consistentCount === null) {
+                consistentCount = count;
+            } else if (count !== consistentCount || count === 0) {
+                isConsistent = false;
+                break;
+            }
+        }
+        
+        if (isConsistent && consistentCount > 0) {
+            console.log(`Separador detectado: "${separator}" (${consistentCount} columnas)`);
+            return separator;
+        }
+    }
+    
+    console.log('Separador no detectado, usando coma por defecto');
+    return ',';
+}
+
+/**
+ * Parsea el contenido CSV usando csv-parser con detección automática de separador
  */
 function parseCsvContent(csvContent) {
     return new Promise((resolve, reject) => {
         const results = [];
+        const separator = detectCsvSeparator(csvContent);
         const stream = Readable.from([csvContent]);
+        
+        console.log(`Usando separador: "${separator}"`);
         
         stream
             .pipe(csv({
-                separator: ',', // Detectar automáticamente separador
+                separator: separator,
                 skipEmptyLines: true,
                 trim: true
             }))
@@ -155,7 +191,7 @@ function parseCsvContent(csvContent) {
                 results.push(cleanedData);
             })
             .on('end', () => {
-                console.log(`CSV parseado exitosamente: ${results.length} filas`);
+                console.log(`CSV parseado exitosamente: ${results.length} filas con separador "${separator}"`);
                 resolve(results);
             })
             .on('error', (error) => {

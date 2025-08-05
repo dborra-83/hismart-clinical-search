@@ -1,0 +1,3 @@
+id_paciente;fecha_nota;medico;especialidad;tipo_consulta;contenido_nota;diagnosticos;medicamentos
+88888;2024-01-27;Dr. Punto Y Coma;Medicina Interna;consulta_externa;"Paciente de prueba para verificar que el parser automático funciona con punto y coma como separador. Esta nota fue creada para probar la detección automática de separadores.";Prueba separador;Ninguno
+77777;2024-01-27;Dra. Separador Test;Neurología;urgencia;"Segunda nota con punto y coma para confirmar que ambas filas se procesan correctamente con el nuevo algoritmo de detección.";Test funcional;Paracetamol 500mg
