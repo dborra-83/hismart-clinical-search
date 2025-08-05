@@ -1,0 +1,7 @@
+{
+  "name": "test-lambda",
+  "version": "1.0.0",
+  "description": "Simple test lambda",
+  "main": "index.js",
+  "dependencies": {}
+}

@@ -56,7 +56,7 @@ const UploadPage: React.FC = () => {
       }
 
       const fileId = `${Date.now()}-${Math.random()}`;
-      const uploadFile: UploadedFile = {
+      const uploadedFile: UploadedFile = {
         id: fileId,
         name: file.name,
         size: file.size,
@@ -65,7 +65,7 @@ const UploadPage: React.FC = () => {
         uploadedAt: new Date()
       };
 
-      setFiles(prev => [...prev, uploadFile]);
+      setFiles(prev => [...prev, uploadedFile]);
       uploadFile(fileId, file);
     });
   }, []);
@@ -83,14 +83,27 @@ const UploadPage: React.FC = () => {
       setUploading(true);
       updateFile(fileId, { status: 'uploading', progress: 0 });
 
-      // 1. Obtener URL presignada
-      const uploadUrlResponse = await getUploadUrl({ filename: file.name });
+      // 1. Obtener URL presignada usando fetch directo
+      console.log('Getting upload URL for:', file.name);
+      const urlResponse = await fetch('https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/upload/csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ filename: file.name })
+      });
+
+      if (!urlResponse.ok) {
+        throw new Error(`Failed to get upload URL: ${urlResponse.status}`);
+      }
+
+      const uploadUrlResponse = await urlResponse.json();
       const { upload_url, file_key } = uploadUrlResponse;
 
       // 2. Subir archivo a S3 usando la URL presignada
       updateFile(fileId, { progress: 10 });
 
-      const response = await fetch(upload_url, {
+      const uploadResponse = await fetch(upload_url, {
         method: 'PUT',
         body: file,
         headers: {
@@ -98,8 +111,8 @@ const UploadPage: React.FC = () => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
       }
 
       updateFile(fileId, { progress: 100, status: 'processing' });
@@ -110,7 +123,7 @@ const UploadPage: React.FC = () => {
         updateFile(fileId, {
           status: 'completed',
           progress: 100,
-          processed: 'Procesado por Lambda'
+          processed: 5
         });
       }, 3000);
 
@@ -143,7 +156,7 @@ const UploadPage: React.FC = () => {
       updateFile(id, { status: 'uploading', progress: 0 });
       // En una implementación real, reintentaríamos la carga
       setTimeout(() => {
-        updateFile(id, { status: 'completed', processed: 75, errors: 2 });
+        updateFile(id, { status: 'completed', processed: 3, errors: 2 });
       }, 3000);
     }
   };
@@ -311,6 +324,43 @@ const UploadPage: React.FC = () => {
               >
                 Descargar CSV de Ejemplo
               </Button>
+              
+              <Button
+                variant="contained"
+                color="secondary"
+                fullWidth
+                sx={{ mt: 1 }}
+                onClick={async () => {
+                  try {
+                    console.log('Testing simplified CRUD upload endpoint...');
+                    const response = await fetch('https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/upload/csv', {
+                      method: 'POST',
+                      mode: 'cors',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ filename: 'test.csv' })
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    const text = await response.text();
+                    console.log('Response body:', text);
+                    
+                    if (response.ok) {
+                      alert('Upload endpoint trabajando! Ver console para detalles.');
+                    } else {
+                      alert(`Upload endpoint falló: ${response.status} - ${text}`);
+                    }
+                  } catch (error) {
+                    console.error('Upload test error:', error);
+                    alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+                  }
+                }}
+              >
+                TEST UPLOAD (Simplified)
+              </Button>
             </CardContent>
           </Card>
         </Grid>
@@ -365,8 +415,8 @@ const UploadPage: React.FC = () => {
                           </Box>
                         }
                         secondary={
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
+                          <>
+                            <Typography variant="caption" color="text.secondary" component="span" sx={{ display: "block" }}>
                               {formatFileSize(file.size)} • 
                               Subido: {file.uploadedAt.toLocaleTimeString()}
                             </Typography>
@@ -380,18 +430,18 @@ const UploadPage: React.FC = () => {
                             )}
                             
                             {file.status === 'completed' && (
-                              <Typography variant="caption" color="success.main">
+                              <Typography variant="caption" color="success.main" component="span" sx={{ display: "block" }}>
                                 ✓ {file.processed} notas procesadas
                                 {file.errors && file.errors > 0 && `, ${file.errors} errores`}
                               </Typography>
                             )}
                             
                             {file.status === 'error' && (
-                              <Typography variant="caption" color="error.main">
+                              <Typography variant="caption" color="error.main" component="span" sx={{ display: "block" }}>
                                 ✗ Error durante el procesamiento
                               </Typography>
                             )}
-                          </Box>
+                          </>
                         }
                       />
                     </ListItem>

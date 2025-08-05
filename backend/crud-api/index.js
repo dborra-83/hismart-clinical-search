@@ -1,4 +1,3 @@
-const AWS = require('aws-sdk');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, DeleteCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -12,8 +11,8 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
 // Variables de entorno
-const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME;
-const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+const TABLE_NAME = process.env.TABLE_NAME;
+const BUCKET_NAME = process.env.BUCKET_NAME;
 const USER_POOL_ID = process.env.USER_POOL_ID;
 
 /**
@@ -21,6 +20,13 @@ const USER_POOL_ID = process.env.USER_POOL_ID;
  */
 exports.handler = async (event, context) => {
     console.log('CRUD API Lambda iniciado:', JSON.stringify(event, null, 2));
+    
+    // Debug environment variables
+    console.log('Environment variables:', {
+        TABLE_NAME,
+        BUCKET_NAME,
+        USER_POOL_ID
+    });
     
     try {
         // Parsear el evento
@@ -31,6 +37,13 @@ exports.handler = async (event, context) => {
         const body = event.body ? JSON.parse(event.body) : {};
         const headers = event.headers || {};
         
+        console.log('Request details:', {
+            httpMethod,
+            path,
+            pathParameters,
+            bodyLength: event.body ? event.body.length : 0
+        });
+        
         // Extraer información del usuario autenticado
         const userInfo = extractUserInfo(event);
         console.log('Usuario autenticado:', userInfo);
@@ -38,7 +51,32 @@ exports.handler = async (event, context) => {
         // Enrutar la solicitud
         let response;
         
-        if (path.startsWith('/notes')) {
+        // Add a simple test endpoint first
+        if (path === '/test' || path.startsWith('/test')) {
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+                },
+                body: JSON.stringify({
+                    message: 'Lambda function is working!',
+                    timestamp: new Date().toISOString(),
+                    env: {
+                        TABLE_NAME: TABLE_NAME || 'MISSING',
+                        BUCKET_NAME: BUCKET_NAME || 'MISSING',
+                        USER_POOL_ID: USER_POOL_ID ? 'SET' : 'MISSING'
+                    },
+                    request: {
+                        method: httpMethod,
+                        path: path,
+                        pathParams: pathParameters
+                    }
+                })
+            };
+        } else if (path.startsWith('/notes')) {
             response = await handleNotesRequests(httpMethod, pathParameters, queryStringParameters, body, userInfo);
         } else if (path.startsWith('/search')) {
             response = await handleSearchRequests(httpMethod, body, userInfo);
@@ -57,7 +95,20 @@ exports.handler = async (event, context) => {
         
         return createResponse(500, {
             error: 'Error interno del servidor',
-            details: error.message
+            details: error.message,
+            stack: error.stack,
+            debug: {
+                httpMethod: event.httpMethod,
+                path: event.path,
+                pathParameters: event.pathParameters,
+                hasBody: !!event.body,
+                bodyLength: event.body ? event.body.length : 0,
+                envVars: {
+                    TABLE_NAME,
+                    BUCKET_NAME,
+                    USER_POOL_ID: USER_POOL_ID ? 'SET' : 'MISSING'
+                }
+            }
         });
     }
 };
@@ -111,12 +162,30 @@ async function handleSearchRequests(method, body, userInfo) {
  * Maneja requests a /upload
  */
 async function handleUploadRequests(method, pathParams, body, userInfo) {
-    if (method === 'POST' && pathParams.csv !== undefined) {
+    console.log('handleUploadRequests called with:', {
+        method,
+        pathParams,
+        bodyKeys: Object.keys(body || {})
+    });
+    
+    if (method === 'POST' && (pathParams.csv !== undefined || pathParams.csv === 'csv')) {
+        console.log('Routing to generatePresignedUploadUrl');
         return await generatePresignedUploadUrl(body, userInfo);
     } else if (method === 'GET' && pathParams.jobId) {
+        console.log('Routing to getUploadStatus');
         return await getUploadStatus(pathParams.jobId, userInfo);
     } else {
-        return createResponse(400, { error: 'Endpoint de upload no válido' });
+        console.log('No matching route found for upload request');
+        return createResponse(400, { 
+            error: 'Endpoint de upload no válido',
+            debug: { 
+                method, 
+                pathParams,
+                expectedCsv: pathParams.csv,
+                pathParamKeys: Object.keys(pathParams),
+                pathParamValues: Object.values(pathParams)
+            }
+        });
     }
 }
 
@@ -536,10 +605,17 @@ async function searchNotes(body, userInfo) {
  * Genera URL presignada para subir CSV
  */
 async function generatePresignedUploadUrl(body, userInfo) {
+    console.log('generatePresignedUploadUrl called with:', {
+        body,
+        userInfo: userInfo ? { username: userInfo.username } : null,
+        BUCKET_NAME
+    });
+    
     try {
         const { filename } = body;
         
         if (!filename || !filename.endsWith('.csv')) {
+            console.log('Invalid filename:', filename);
             return createResponse(400, { 
                 error: 'Nombre de archivo requerido y debe ser .csv' 
             });
@@ -567,7 +643,13 @@ async function generatePresignedUploadUrl(body, userInfo) {
         
     } catch (error) {
         console.error('Error generando URL presignada:', error);
-        return createResponse(500, { error: 'Error generando URL de carga' });
+        return createResponse(500, { 
+            error: 'Error generando URL de carga',
+            details: error.message,
+            errorType: error.name,
+            bucketName: BUCKET_NAME,
+            hasBucketName: !!BUCKET_NAME
+        });
     }
 }
 

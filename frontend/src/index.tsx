@@ -25,7 +25,14 @@ Amplify.configure({
       {
         name: 'HiSmartAPI',
         endpoint: 'https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod',
-        region: 'us-east-1'
+        region: 'us-east-1',
+        custom_header: async () => {
+          return { 
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+          }
+        }
       }
     ]
   }

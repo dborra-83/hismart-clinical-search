@@ -162,7 +162,7 @@ export class HiSmartSimpleStack extends cdk.Stack {
     const crudApiFunction = new lambda.Function(this, 'CrudApiFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend/crud-api')),
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend/simple-crud')),
       environment: {
         TABLE_NAME: clinicalNotesTable.tableName,
         BUCKET_NAME: clinicalDataBucket.bucketName,
@@ -199,15 +199,10 @@ export class HiSmartSimpleStack extends cdk.Stack {
       memorySize: 1024
     });
 
-    // 6. API Gateway
+    // 6. API Gateway (sin CORS)
     const api = new apigateway.RestApi(this, 'HiSmartApi', {
       restApiName: 'HISmart API',
-      description: 'API para HISmart - Sistema de notas clínicas',
-      defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token']
-      }
+      description: 'API para HISmart - Sistema de notas clínicas'
     });
 
     // Cognito Authorizer
@@ -219,18 +214,18 @@ export class HiSmartSimpleStack extends cdk.Stack {
     // API Resources y Methods
     const notesResource = api.root.addResource('notes');
     notesResource.addMethod('GET', new apigateway.LambdaIntegration(crudApiFunction), {
-      authorizer: cognitoAuthorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO
+      authorizationType: apigateway.AuthorizationType.NONE
     });
     notesResource.addMethod('POST', new apigateway.LambdaIntegration(crudApiFunction), {
-      authorizer: cognitoAuthorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    notesResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(crudApiFunction), {
+      authorizationType: apigateway.AuthorizationType.NONE
     });
 
     const noteByIdResource = notesResource.addResource('{id}');
     noteByIdResource.addMethod('GET', new apigateway.LambdaIntegration(crudApiFunction), {
-      authorizer: cognitoAuthorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO
+      authorizationType: apigateway.AuthorizationType.NONE
     });
 
     const searchResource = api.root.addResource('search');
@@ -249,8 +244,25 @@ export class HiSmartSimpleStack extends cdk.Stack {
     const uploadResource = api.root.addResource('upload');
     const csvUploadResource = uploadResource.addResource('csv');
     csvUploadResource.addMethod('POST', new apigateway.LambdaIntegration(crudApiFunction), {
-      authorizer: cognitoAuthorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    csvUploadResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(crudApiFunction), {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+
+    // Create separate test lambda
+    const testLambda = new lambda.Function(this, 'TestLambda', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend/test-lambda')),
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128
+    });
+
+    // Add a test endpoint without authentication for debugging
+    const testResource = api.root.addResource('test');
+    testResource.addMethod('GET', new apigateway.LambdaIntegration(testLambda), {
+      authorizationType: apigateway.AuthorizationType.NONE
     });
 
     // 7. Outputs

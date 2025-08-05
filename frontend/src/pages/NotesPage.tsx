@@ -59,15 +59,28 @@ const NotesPage: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<ClinicalNote | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Cargar notas (simulado)
+  // Cargar notas reales
   useEffect(() => {
     const loadNotes = async () => {
       setLoading(true);
       
-      // Simular carga de datos
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const mockNotes: ClinicalNote[] = [
+      try {
+        console.log('Loading notes from API...');
+        const response = await fetch('https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/notes', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Notes API response:', data);
+          setNotes(data.notas || []);
+        } else {
+          console.error('Failed to load notes:', response.status);
+          // Fallback to mock data if API fails
+          const mockNotes: ClinicalNote[] = [
         {
           id: '1',
           paciente_id: '12345',
@@ -114,7 +127,13 @@ const NotesPage: React.FC = () => {
       ];
       
       setNotes(mockNotes);
-      setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        setNotes([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadNotes();

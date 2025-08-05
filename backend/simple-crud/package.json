@@ -1,0 +1,12 @@
+{
+  "name": "simple-crud",
+  "version": "1.0.0",
+  "description": "Simplified CRUD Lambda for debugging",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.645.0",
+    "@aws-sdk/s3-request-presigner": "^3.645.0",
+    "@aws-sdk/client-dynamodb": "^3.645.0",
+    "@aws-sdk/lib-dynamodb": "^3.645.0"
+  }
+}
