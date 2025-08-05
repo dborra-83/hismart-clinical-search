@@ -1,0 +1,28 @@
+{
+  "name": "hismart-csv-parser",
+  "version": "1.0.0",
+  "description": "Lambda para parsear archivos CSV y extraer notas clínicas",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install && zip -r function.zip .",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1469.0",
+    "@aws-sdk/client-dynamodb": "^3.441.0",
+    "@aws-sdk/lib-dynamodb": "^3.441.0",
+    "@aws-sdk/client-s3": "^3.441.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.441.0",
+    "csv-parser": "^3.0.0",
+    "uuid": "^9.0.1",
+    "moment": "^2.29.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.54.0"
+  },
+  "keywords": ["lambda", "csv", "healthcare", "clinical-notes"],
+  "author": "HISmart Team",
+  "license": "MIT"
+}

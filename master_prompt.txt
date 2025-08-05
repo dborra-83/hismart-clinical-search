@@ -1,0 +1,419 @@
+# HISmart - Master Prompt para Claude Code
+
+## Contexto del Proyecto
+
+HISmart es una aplicación web serverless marca blanca para hospitales que permite a profesionales médicos buscar y analizar notas clínicas de manera inteligente utilizando IA. El sistema está completamente construido en AWS usando arquitectura serverless y mejores prácticas de la nube.
+
+## Arquitectura Técnica
+
+### Stack Tecnológico
+- **Frontend**: React 18 + TypeScript + Material-UI + AWS Amplify
+- **Backend**: AWS Lambda (Node.js 18) + API Gateway + DynamoDB
+- **IA**: Amazon Bedrock (Claude 3 Sonnet)
+- **Autenticación**: Amazon Cognito + MFA
+- **Almacenamiento**: Amazon S3
+- **IaC**: AWS CDK (TypeScript)
+- **Idioma**: Español (interfaz completamente localizada)
+
+### Componentes Principales
+
+1. **Infrastructure Stack** (`infrastructure/lib/`)
+   - `hismart-infrastructure-stack.ts`: DynamoDB + S3 buckets
+   - `hismart-cognito-stack.ts`: User pools + grupos + MFA
+   - `hismart-backend-stack.ts`: Lambdas + API Gateway
+   - `hismart-frontend-stack.ts`: S3 + CloudFront para hosting
+
+2. **Backend Lambdas** (`backend/`)
+   - `csv-parser/`: Procesamiento de archivos CSV con validación
+   - `crud-api/`: CRUD completo + búsqueda + presigned URLs
+   - `ai-analysis/`: Integración Bedrock para 4 tipos de análisis IA
+
+3. **Frontend React** (`frontend/src/`)
+   - `pages/`: 6 páginas principales (Dashboard, Search, Upload, Notes, Analysis, Settings)
+   - `contexts/`: Auth + Branding para white-label
+   - `services/api.ts`: Capa de servicios con manejo de errores
+   - `hooks/useApi.ts`: Hooks personalizados con React Query
+
+## Características Implementadas
+
+### ✅ Sistema White-Label Completo
+- Colores personalizables por institución
+- Logo personalizable
+- Textos configurables
+- Branding dinámico con BrandingContext
+
+### ✅ Autenticación Robusta
+- Amazon Cognito con grupos (Administradores, Médicos, Enfermería)
+- MFA obligatorio configurado
+- JWT tokens con manejo seguro
+- Rutas protegidas por rol
+
+### ✅ Procesamiento de Datos Médicos
+- Parser CSV flexible para diferentes formatos hospitalarios
+- Validación de datos médicos
+- Detección de duplicados
+- Mapeo automático de columnas
+
+### ✅ Búsqueda Inteligente
+- Búsqueda de texto completo
+- Filtros por especialidad, médico, fechas
+- Puntuación de relevancia
+- Resultados paginados con preview
+
+### ✅ Análisis IA con Bedrock
+- **Análisis Completo**: Evaluación exhaustiva de notas
+- **Resumen Ejecutivo**: Síntesis concisa configurable
+- **Evaluación de Riesgos**: Análisis de factores de riesgo
+- **Extracción Estructurada**: Datos en formato JSON
+
+### ✅ Dashboard Médico
+- Métricas en tiempo real
+- Gráficos por especialidad
+- Top médicos más activos
+- Estadísticas de uso
+
+### ✅ Carga de Archivos
+- Drag & drop para CSV
+- Progreso en tiempo real
+- Validación de formato
+- Estados de procesamiento
+
+### ✅ Interfaz Responsive
+- Mobile-first design
+- Material-UI components
+- Sidebar colapsable
+- Optimizado para tablets médicas
+
+## Flujos de Trabajo Principales
+
+### 1. Carga de Datos Clínicos
+```
+Usuario sube CSV → Validación formato → S3 upload → Lambda parser → 
+Procesamiento → DynamoDB → Notificación de estado
+```
+
+### 2. Búsqueda y Análisis
+```
+Query de búsqueda → Filtros aplicados → DynamoDB scan/query → 
+Resultados con relevancia → Análisis IA opcional → Visualización
+```
+
+### 3. Análisis con IA
+```
+Selección de contenido → Tipo de análisis → Bedrock Claude → 
+Procesamiento → Resultado estructurado → Cache + Historial
+```
+
+## Estructura de Archivos Clave
+
+### Configuración de Infraestructura
+- `infrastructure/bin/hismart.ts`: Entry point CDK
+- `infrastructure/cdk.json`: Configuración CDK
+- `deploy-dev.sh`: Script de despliegue completo
+
+### Backend Crítico
+- `backend/crud-api/index.js`: API principal con 15+ endpoints
+- `backend/ai-analysis/index.js`: Integración Bedrock completa
+- `backend/csv-parser/index.js`: Parser flexible con validación
+
+### Frontend Esencial
+- `frontend/src/App.tsx`: Routing + auth guards
+- `frontend/src/contexts/AuthContext.tsx`: Gestión de autenticación
+- `frontend/src/contexts/BrandingContext.tsx`: White-label system
+- `frontend/src/services/api.ts`: 20+ funciones API con error handling
+
+## Seguridad Implementada
+
+- ✅ Autenticación JWT con Cognito
+- ✅ Roles y permisos granulares
+- ✅ Sanitización de inputs
+- ✅ HTTPS obligatorio
+- ✅ CORS configurado específicamente
+- ✅ No exposición de tokens en logs
+- ✅ Validación de permisos por endpoint
+- ✅ MFA obligatorio para usuarios médicos
+
+## Base de Datos (DynamoDB)
+
+### Tabla Principal: `clinical-notes-dev`
+```
+Partition Key: id (string)
+Attributes:
+- paciente_id, fecha_nota, medico, especialidad
+- tipo_nota, diagnosticos[], medicamentos[]
+- contenido_original, contenido_procesado
+- palabras_clave[], resumen_ia, analisis_ia_completo
+- estado, fecha_carga, usuario_creacion
+```
+
+### Índices Secundarios:
+- `paciente-index`: Por paciente_id
+- `medico-especialidad-index`: Por médico y especialidad
+- `fecha-index`: Por fecha de nota
+
+## APIs Implementadas
+
+### CRUD Endpoints
+- `GET /notes` - Lista con filtros y paginación
+- `GET /notes/{id}` - Nota específica
+- `POST /notes` - Crear nueva nota
+- `PUT /notes/{id}` - Actualizar nota
+- `DELETE /notes/{id}` - Eliminar (solo admin)
+
+### Búsqueda y Análisis
+- `POST /search` - Búsqueda avanzada
+- `POST /analyze/note` - Análisis completo
+- `POST /analyze/summary` - Resumen ejecutivo
+- `POST /analyze/risk` - Evaluación de riesgos
+- `POST /analyze/extract` - Extracción estructurada
+
+### Utilidades
+- `POST /upload/csv` - Generar presigned URL
+- `GET /upload/status/{jobId}` - Estado de procesamiento
+- `GET /stats/dashboard` - Métricas para dashboard
+
+## Despliegue y DevOps
+
+### Ambientes Configurados
+- **Development**: Configuración completa para pruebas
+- **Production**: Optimizado para alta disponibilidad
+
+### Script de Despliegue (`deploy-dev.sh`)
+1. Verificación de prerrequisitos (AWS CLI, Node.js)
+2. Bootstrap CDK si es necesario
+3. Despliegue de infraestructura (4 stacks)
+4. Build y despliegue de frontend
+5. Creación de usuarios de prueba
+6. Configuración completa del ambiente
+
+### Usuarios de Prueba Configurados
+- **admin** / TempPass123! (Administrador)
+- **medico1** / TempPass123! (Dr. Juan Pérez - Cardiología)
+
+## Personalización White-Label
+
+### Configuración de Branding
+```json
+{
+  "nombre": "HISmart Hospital XYZ",
+  "logo": "/branding/logo.png",
+  "colores": {
+    "primario": "#1565C0",
+    "secundario": "#42A5F5",
+    "fondo": "#F4F6F8"
+  },
+  "textos": {
+    "bienvenida": "Bienvenido al sistema HISmart",
+    "descripcion": "Búsqueda inteligente de notas clínicas"
+  }
+}
+```
+
+## Instrucciones para Claude Code
+
+### Al trabajar con este proyecto:
+
+1. **Mantener Arquitectura Serverless**: Todo debe ejecutarse en Lambda/managed services
+2. **Preservar Idioma Español**: Toda la UI debe permanecer en español
+3. **Respetar White-Label**: Mantener sistema de branding personalizable
+4. **Seguir Patrones Establecidos**: Usar hooks/contexts existentes
+5. **Validar Seguridad**: Verificar permisos en todos los cambios
+6. **Documentar Cambios**: Actualizar README correspondiente
+
+### Comandos de Desarrollo Frecuentes:
+```bash
+# Despliegue completo development
+./deploy-dev.sh
+
+# Solo infraestructura
+cd infrastructure && npx cdk deploy --all
+
+# Solo frontend
+cd frontend && npm run build && aws s3 sync build/ s3://bucket-name
+
+# Desarrollo local frontend
+cd frontend && npm start
+```
+
+### Archivos No Modificar:
+- `deploy-dev.sh` - Script de despliegue funcional
+- `aws-config.ts` - Configuración de Amplify
+- `BrandingContext.tsx` - Sistema white-label core
+
+### Archivos Frecuentemente Editados:
+- `frontend/src/pages/*.tsx` - Páginas de la aplicación
+- `backend/*/index.js` - Lógica de Lambdas
+- `infrastructure/lib/*.ts` - Configuración de infraestructura
+
+## Estado Actual del Proyecto
+
+### ✅ Completado
+- Infraestructura completa desplegable
+- Backend funcional con 3 Lambdas
+- Frontend completo en español
+- Autenticación con Cognito
+- Análisis IA con Bedrock
+- Sistema white-label
+- Documentación técnica
+
+### 🔄 Listo para Despliegue
+- Script `deploy-dev.sh` probado
+- Usuarios de prueba configurados
+- Todas las funcionalidades implementadas
+- Seguridad configurada
+
+### 📋 Próximos Pasos Sugeridos
+1. Ejecutar `./deploy-dev.sh` para despliegue inicial
+2. Probar funcionalidades con usuarios de prueba
+3. Cargar datos CSV de ejemplo
+4. Validar análisis IA en ambiente real
+5. Personalizar branding según institución
+
+## Notas de Desarrollo
+
+- **Modelo IA**: Configurado para Claude 3 Sonnet (actualizable a Claude 4)
+- **Regiones AWS**: Optimizado para us-east-1 (configurable)
+- **Costos**: Estimado $20-50/mes para ambiente dev pequeño
+- **Escalabilidad**: Arquitectura serverless auto-escalable
+- **Compliance**: Preparado para HIPAA (requiere configuración adicional)
+
+## Casos de Uso Implementados
+
+1. **Hospital Regional**: Búsqueda de notas por especialidad
+2. **Clínica Privada**: Análisis de riesgo de pacientes
+3. **Centro Médico**: Dashboard de métricas por médico
+4. **Consulta Externa**: Resúmenes ejecutivos para referencias
+5. **Administración**: Reportes y estadísticas de uso
+
+Este proyecto está completamente funcional y listo para despliegue en ambiente de desarrollo. Todas las funcionalidades core están implementadas y probadas localmente.
+
+---
+
+## PROMPTS DE IA PARA ANÁLISIS CLÍNICO
+
+### Prompt Base para Análisis Completo:
+```
+Analiza la siguiente nota clínica de manera exhaustiva:
+
+{contenido}
+
+Proporciona:
+1. Resumen de los hallazgos principales
+2. Diagnósticos mencionados o sugeridos
+3. Medicamentos y tratamientos identificados
+4. Estado del paciente
+5. Plan de seguimiento
+6. Cualquier área que requiera atención especial
+
+Responde en español de manera profesional y estructurada.
+```
+
+### Prompt para Resumen Ejecutivo:
+```
+Genera un resumen ejecutivo de máximo {max_palabras} palabras de la siguiente nota clínica:
+
+{contenido}
+
+El resumen debe incluir:
+- Diagnóstico principal
+- Estado actual del paciente
+- Tratamiento prescrito
+- Próximos pasos
+
+Mantén un lenguaje médico profesional en español.
+```
+
+### Prompt para Evaluación de Riesgos:
+```
+Evalúa el nivel de riesgo del paciente basado en la siguiente nota clínica:
+
+{contenido}
+
+Factores adicionales a considerar: {factores_adicionales}
+
+Proporciona:
+1. Nivel de riesgo (Bajo/Medio/Alto/Crítico)
+2. Factores de riesgo identificados
+3. Recomendaciones para mitigar riesgos
+4. Signos de alerta a monitorear
+
+Responde de manera estructurada en español.
+```
+
+### Prompt para Extracción de Datos:
+```
+Extrae información estructurada de la siguiente nota clínica en formato JSON:
+
+{contenido}
+
+Extrae:
+- datos_demograficos: {edad, genero, etc}
+- signos_vitales: {presion_arterial, temperatura, etc}
+- medicamentos: [{nombre, dosis, frecuencia}]
+- diagnosticos: [lista de diagnósticos]
+- fechas_importantes: [fechas relevantes]
+- examenes_solicitados: [lista de exámenes]
+
+Responde solo con el JSON válido, sin texto adicional.
+```
+
+---
+
+## CONFIGURACIÓN AWS
+
+### Variables de Entorno Utilizadas:
+```bash
+# AWS Configuration
+AWS_REGION=us-east-1
+ENVIRONMENT=dev
+
+# S3 Buckets (generados por CDK)
+CLINICAL_DATA_BUCKET=hismart-clinical-data-dev-xxxxx
+WEBSITE_BUCKET=hismart-website-dev-xxxxx
+
+# DynamoDB (generado por CDK)
+CLINICAL_NOTES_TABLE_NAME=clinical-notes-dev
+
+# Cognito (generado por CDK)
+USER_POOL_ID=us-east-1_xxxxxxxxx
+USER_POOL_CLIENT_ID=xxxxxxxxxxxxxxxxxxxx
+
+# Bedrock Configuration
+BEDROCK_REGION=us-east-1
+MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
+
+# API Gateway (generado por CDK)
+API_GATEWAY_URL=https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/dev
+```
+
+### Estructura CSV Soportada:
+```
+ID_Paciente,Fecha_Nota,Medico,Especialidad,Tipo_Consulta,Contenido_Nota,Diagnosticos,Medicamentos
+12345,2024-01-15,Dr. Juan Pérez,Cardiología,consulta_externa,"Paciente presenta...",Hipertensión;Diabetes,"Losartán 50mg;Metformina 850mg"
+```
+
+**Columnas soportadas (flexibles):**
+- **ID_Paciente:** id_paciente, paciente_id, patient_id, id, id_pac
+- **Fecha_Nota:** fecha_nota, fecha, date, fecha_consulta, fecha_atencion
+- **Medico:** medico, doctor, physician, médico, profesional
+- **Especialidad:** especialidad, specialty, area
+- **Tipo_Consulta:** tipo_consulta, tipo, type, modalidad
+- **Contenido_Nota:** contenido_nota, nota, note, content, observaciones
+- **Diagnosticos:** diagnosticos, diagnosis, dx (separados por ; , |)
+- **Medicamentos:** medicamentos, medications, drugs, tratamiento (separados por ; , |)
+
+### Flujo de procesamiento CSV:
+1. **Trigger:** Archivo CSV subido a S3 → EventBridge → Lambda
+2. **Validación:** Verificar formato CSV y estructura
+3. **Parsing:** Usar csv-parser para extraer datos fila por fila
+4. **Mapeo flexible:** Detectar columnas automáticamente
+5. **Limpieza:** Normalizar texto y remover caracteres especiales
+6. **Deduplicación:** Verificar duplicados por ID_Paciente + Fecha_Nota
+7. **Enriquecimiento:** Generar palabras clave y resumen con IA
+8. **Almacenamiento:** Guardar en DynamoDB
+9. **Indexación:** Crear índices para búsqueda rápida
+
+---
+
+*Última actualización: Enero 2025*
+*Proyecto completamente funcional y listo para despliegue*

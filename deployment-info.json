@@ -1,0 +1,67 @@
+{
+  "deployment": {
+    "status": "SUCCESS",
+    "timestamp": "2025-08-05T01:31:00Z",
+    "environment": "dev",
+    "region": "us-east-1",
+    "account": "520754296204"
+  },
+  "infrastructure": {
+    "stackName": "HISmart-Dev",
+    "description": "HISmart - Sistema de búsqueda inteligente de notas clínicas (ambiente dev)"
+  },
+  "api": {
+    "gatewayUrl": "https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/",
+    "endpoints": {
+      "notes": "GET/POST /notes",
+      "noteById": "GET /notes/{id}",
+      "search": "POST /search",
+      "analyzeNote": "POST /analyze/note",
+      "uploadCsv": "POST /upload/csv"
+    }
+  },
+  "authentication": {
+    "userPoolId": "us-east-1_m8sYNBNrl",
+    "userPoolClientId": "2jo6jlihm9jao8vn79c7hasp73",
+    "groups": ["Administradores", "Medicos"]
+  },
+  "storage": {
+    "clinicalDataBucket": "hismart-clinical-data-520754296204-us-east-1",
+    "dynamodbTable": "clinical-notes-dev"
+  },
+  "testUsers": {
+    "admin": {
+      "username": "admin",
+      "email": "admin@hismart.dev",
+      "password": "HISmart2024!",
+      "group": "Administradores",
+      "status": "CONFIRMED"
+    },
+    "medico1": {
+      "username": "medico1",
+      "email": "medico1@hismart.dev",
+      "password": "HISmart2024!",
+      "group": "Medicos",
+      "status": "CONFIRMED"
+    }
+  },
+  "sampleData": {
+    "csvFile": "s3://hismart-clinical-data-520754296204-us-east-1/uploads/examples/ejemplo_notas_clinicas.csv",
+    "records": 10,
+    "description": "Archivo CSV con 10 notas clínicas de ejemplo de diferentes especialidades"
+  },
+  "features": {
+    "authentication": "Amazon Cognito (MFA disabled for dev)",
+    "aiAnalysis": "Amazon Bedrock (Claude 3 Sonnet)",
+    "storage": "S3 + DynamoDB",
+    "api": "API Gateway + Lambda",
+    "infrastructure": "AWS CDK"
+  },
+  "nextSteps": [
+    "Construir y desplegar el frontend React",
+    "Probar la API con los usuarios de prueba",
+    "Cargar datos CSV desde la interfaz web",
+    "Validar análisis IA con Bedrock",
+    "Configurar branding personalizado"
+  ]
+}

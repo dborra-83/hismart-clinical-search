@@ -1,0 +1,34 @@
+{
+  "nombre": "HISmart",
+  "logo": "/branding/logo.png",
+  "colores": {
+    "primario": "#0D47A1",
+    "secundario": "#1976D2",
+    "fondo": "#F4F6F8",
+    "texto": "#333333",
+    "exito": "#4CAF50",
+    "error": "#F44336",
+    "advertencia": "#FF9800",
+    "info": "#2196F3"
+  },
+  "textos": {
+    "login": "Bienvenido a HISmart – Plataforma de búsqueda clínica inteligente",
+    "descripcion": "Sistema de gestión hospitalaria con búsqueda inteligente de notas clínicas",
+    "footer": "© 2024 HISmart. Todos los derechos reservados.",
+    "titulo_busqueda": "Búsqueda Inteligente de Notas Clínicas",
+    "subtitulo_busqueda": "Encuentra información clínica relevante con IA",
+    "boton_subir": "Subir Archivo Excel",
+    "boton_buscar": "Buscar",
+    "boton_analizar": "Analizar con IA",
+    "placeholder_busqueda": "Ingresa términos de búsqueda...",
+    "loading": "Procesando...",
+    "sin_resultados": "No se encontraron resultados",
+    "error_carga": "Error al cargar el archivo",
+    "exito_carga": "Archivo cargado exitosamente"
+  },
+  "configuracion": {
+    "idioma": "es",
+    "formato_fecha": "DD/MM/YYYY",
+    "timezone": "America/Santiago"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "hismart-crud-api",
+  "version": "1.0.0",
+  "description": "Lambda para operaciones CRUD y búsquedas en HISmart",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install && zip -r function.zip .",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1469.0",
+    "@aws-sdk/client-dynamodb": "^3.441.0",
+    "@aws-sdk/lib-dynamodb": "^3.441.0",
+    "@aws-sdk/client-s3": "^3.441.0",
+    "@aws-sdk/s3-request-presigner": "^3.441.0",
+    "uuid": "^9.0.1",
+    "moment": "^2.29.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.54.0"
+  },
+  "keywords": ["lambda", "crud", "api", "healthcare", "search"],
+  "author": "HISmart Team",
+  "license": "MIT"
+}
