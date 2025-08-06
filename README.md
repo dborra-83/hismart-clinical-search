@@ -13,10 +13,12 @@ HISmart permite a profesionales médicos buscar y analizar notas clínicas de ma
 ✅ **Base de datos**: DynamoDB conectada mostrando datos reales  
 ✅ **Sin errores**: 502 y CORS completamente resueltos  
 ✅ **API real**: Sin datos simulados, todo conectado a AWS  
-✅ **Análisis IA**: Integración con Amazon Bedrock disponible  
+✅ **Búsqueda IA**: Sistema de búsqueda inteligente con Bedrock Claude operativo  
+✅ **Análisis contextual**: IA analiza consultas y clasifica resultados por relevancia  
+✅ **CSV automático**: Procesamiento automático con detección de separadores  
 ✅ **Autenticación**: Temporalmente deshabilitada para testing  
 ✅ **White-label**: Sistema de branding personalizable  
-✅ **Documentación**: Actualizada con soluciones implementadas
+✅ **Documentación**: Actualizada con todas las funcionalidades
 
 ## 🏛️ Arquitectura Técnica
 
@@ -124,18 +126,22 @@ Durante el desarrollo se resolvieron exitosamente varios problemas técnicos cr�
 - Gestión de sesiones con JWT tokens
 
 ### 📤 Carga y Procesamiento de Datos
-- Drag & drop de archivos CSV
-- Parser flexible para diferentes formatos hospitalarios
-- Progreso de carga en tiempo real
-- Validación y detección de duplicados
-- Mapeo automático de columnas
+- **Drag & Drop**: Subida intuitiva de archivos CSV
+- **Detección Automática**: Separadores (coma, punto y coma, tabulaciones)
+- **Trigger S3**: Procesamiento automático al subir archivos
+- **Parser Inteligente**: Mapeo flexible de columnas médicas
+- **Progreso en Tiempo Real**: Estado de carga y procesamiento
+- **Validación Avanzada**: Detección de duplicados y errores
+- **Soporte UTF-8**: Caracteres especiales del español
 
-### 🔍 Búsqueda Inteligente
-- Búsqueda de texto completo en notas clínicas
-- Filtros por especialidad, médico, fechas
-- Resultados con puntuación de relevancia
-- Preview de contenido
-- Paginación avanzada
+### 🔍 Búsqueda Inteligente con IA
+- **Análisis Contextual**: IA de Bedrock Claude analiza consultas médicas
+- **Generación de Keywords**: Extrae términos médicos relevantes automáticamente
+- **Búsqueda Semántica**: Busca por significado, no solo texto literal
+- **Ranking Inteligente**: Clasifica resultados por relevancia con explicaciones IA
+- **Filtros Avanzados**: Especialidad, médico, rango de fechas
+- **Explicación de Relevancia**: Cada resultado incluye por qué es relevante
+- **Preview Enriquecido**: Resumen IA + contenido original + diagnósticos
 
 ### 🤖 Análisis con IA (Bedrock Claude)
 - **Análisis Completo**: Evaluación exhaustiva de notas
@@ -184,9 +190,9 @@ Durante el desarrollo se resolvieron exitosamente varios problemas técnicos cr�
 CSV Upload → S3 Bucket → Lambda Parser → Validation → DynamoDB → Notification
 ```
 
-### 2. Búsqueda y Análisis
+### 2. Búsqueda Inteligente con IA
 ```
-Search Query → API Gateway → Lambda CRUD → DynamoDB → Results + AI Analysis
+Search Query → IA Analysis (Bedrock) → Keywords Generation → DynamoDB Search → IA Ranking → Results with Explanations
 ```
 
 ### 3. Análisis con IA
@@ -209,10 +215,10 @@ HISmart/
 │   ├── package.json
 │   └── README.md
 ├── backend/               # Lambdas Node.js
-│   ├── csv-parser/        # Lambda para parsing de CSV
-│   ├── crud-api/          # Lambda para operaciones CRUD
-│   ├── ai-analysis/       # Lambda para integración Bedrock
-│   ├── ejemplo_notas_clinicas.csv  # Datos de prueba
+│   ├── simple-crud/       # Lambda principal: CRUD + búsqueda IA + Bedrock
+│   ├── csv-parser/        # Lambda para parsing automático de CSV
+│   ├── ai-analysis/       # Lambda para análisis IA avanzado
+│   ├── test-lambda/       # Lambda de pruebas y debugging
 │   └── README.md
 ├── frontend/              # Aplicación React
 │   ├── src/

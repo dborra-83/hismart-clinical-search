@@ -44,7 +44,9 @@ interface SearchResult {
   diagnosticos: string[];
   medicamentos: string[];
   relevance_score: number;
-  contenido_preview: string;
+  relevance_explanation: string;
+  contenido_original: string;
+  resumen_ia: string;
 }
 
 const SearchPage: React.FC = () => {
@@ -54,6 +56,8 @@ const SearchPage: React.FC = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [searchKeywords, setSearchKeywords] = useState<string[]>([]);
+  const [error, setError] = useState<string>('');
   
   // Filtros
   const [especialidad, setEspecialidad] = useState('');
@@ -90,67 +94,89 @@ const SearchPage: React.FC = () => {
 
     setLoading(true);
     setSearched(false);
+    setError('');
+    setResults([]);
+    setSearchKeywords([]);
 
-    // Simular búsqueda (en producción sería llamada a API)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Resultados de ejemplo
-    const mockResults: SearchResult[] = [
-      {
-        id: '1',
-        paciente_id: '12345',
-        fecha_nota: '2024-01-15',
-        medico: 'Dr. Juan Pérez',
-        especialidad: 'Cardiología',
-        tipo_nota: 'consulta_externa',
-        diagnosticos: ['Hipertensión arterial'],
-        medicamentos: ['Losartán 50mg'],
-        relevance_score: 95,
-        contenido_preview: 'Paciente masculino de 65 años que acude por control rutinario de hipertensión arterial...'
-      },
-      {
-        id: '2', 
-        paciente_id: '12346',
-        fecha_nota: '2024-01-15',
-        medico: 'Dra. María González',
-        especialidad: 'Endocrinología',
-        tipo_nota: 'consulta_externa',
-        diagnosticos: ['Diabetes mellitus tipo 2', 'Sobrepeso'],
-        medicamentos: ['Metformina 850mg', 'Glibenclamida 5mg'],
-        relevance_score: 87,
-        contenido_preview: 'Paciente femenina de 58 años con diabetes mellitus tipo 2. Acude para evaluación...'
-      },
-      {
-        id: '3',
-        paciente_id: '12347', 
-        fecha_nota: '2024-01-16',
-        medico: 'Dr. Carlos Rodríguez',
-        especialidad: 'Neurología',
-        tipo_nota: 'consulta_externa',
-        diagnosticos: ['Cefalea tensional'],
-        medicamentos: ['Amitriptilina 25mg', 'Ibuprofeno 400mg'],
-        relevance_score: 78,
-        contenido_preview: 'Paciente de 45 años consulta por cefaleas recurrentes de 3 meses de evolución...'
+    try {
+      console.log('=== INICIANDO BÚSQUEDA INTELIGENTE ===');
+      console.log('Query:', query);
+      
+      // Preparar filtros
+      const filters: any = {};
+      
+      if (fechaDesde) {
+        filters.dateFrom = fechaDesde.toISOString().split('T')[0];
       }
-    ];
+      
+      if (fechaHasta) {
+        filters.dateTo = fechaHasta.toISOString().split('T')[0];
+      }
+      
+      if (especialidad) {
+        filters.especialidad = especialidad;
+      }
+      
+      console.log('Filters:', filters);
 
-    // Filtrar resultados según query
-    const filteredResults = mockResults.filter(result => {
-      const searchTerms = query.toLowerCase().split(' ');
-      const searchableText = [
-        result.contenido_preview,
-        result.diagnosticos.join(' '),
-        result.medicamentos.join(' '),
-        result.especialidad,
-        result.medico
-      ].join(' ').toLowerCase();
+      // Llamar al endpoint de búsqueda inteligente
+      const searchResponse = await fetch('https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: query.trim(),
+          filters: filters
+        })
+      });
 
-      return searchTerms.some(term => searchableText.includes(term));
-    });
+      console.log('Search response status:', searchResponse.status);
+      console.log('Search response headers:', Object.fromEntries(searchResponse.headers.entries()));
 
-    setResults(filteredResults);
-    setLoading(false);
-    setSearched(true);
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        console.error('Search API error:', errorText);
+        throw new Error(`Búsqueda falló: ${searchResponse.status} - ${errorText}`);
+      }
+
+      const searchData = await searchResponse.json();
+      console.log('Search response data:', searchData);
+
+      // Procesar resultados
+      const searchResults: SearchResult[] = searchData.results.map((item: any) => ({
+        id: item.id,
+        paciente_id: item.paciente_id,
+        fecha_nota: item.fecha_nota,
+        medico: item.medico || 'No especificado',
+        especialidad: item.especialidad || 'No especificada',
+        tipo_nota: item.tipo_nota || 'consulta_externa',
+        diagnosticos: Array.isArray(item.diagnosticos) ? item.diagnosticos : [item.diagnosticos || 'Sin diagnóstico'],
+        medicamentos: Array.isArray(item.medicamentos) ? item.medicamentos : [item.medicamentos || 'Sin medicamentos'],
+        relevance_score: Math.round((item.relevance_score || 0.5) * 100),
+        relevance_explanation: item.relevance_explanation || 'Coincidencia con términos de búsqueda',
+        contenido_original: item.contenido_original || item.contenido_procesado || 'Sin contenido',
+        resumen_ia: item.resumen_ia || 'Sin resumen disponible'
+      }));
+
+      setResults(searchResults);
+      setSearchKeywords(searchData.searchKeywords || []);
+      
+      console.log(`Búsqueda completada: ${searchResults.length} resultados encontrados`);
+
+    } catch (error) {
+      console.error('=== ERROR EN BÚSQUEDA INTELIGENTE ===');
+      console.error('Error details:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setError(`Error en la búsqueda: ${errorMessage}`);
+      
+      // Mostrar error al usuario
+      alert(`Error en la búsqueda inteligente: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+      setSearched(true);
+    }
   };
 
   const handleClearFilters = () => {
@@ -296,24 +322,55 @@ const SearchPage: React.FC = () => {
           {/* Resultados */}
           <Grid item xs={12} md={8}>
             {loading && (
-              <LoadingSpinner message="Buscando notas clínicas..." fullScreen={false} />
+              <LoadingSpinner message="Analizando consulta con IA y buscando en base de datos..." fullScreen={false} />
             )}
 
             {!loading && !searched && (
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <SearchIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
                 <Typography variant="h6" color="text.secondary">
-                  Ingresa términos de búsqueda para comenzar
+                  Búsqueda Inteligente con IA
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Puedes buscar por síntomas, diagnósticos, medicamentos o contenido de notas
+                  Ingresa términos de búsqueda para que la IA analice tu consulta y encuentre notas clínicas relevantes
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Powered by Amazon Bedrock Claude
                 </Typography>
               </Paper>
             )}
 
-            {!loading && searched && results.length === 0 && (
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {/* Palabras clave generadas por IA */}
+            {searchKeywords.length > 0 && (
+              <Card sx={{ mb: 2 }}>
+                <CardContent>
+                  <Typography variant="subtitle2" gutterBottom>
+                    🤖 Palabras clave generadas por IA:
+                  </Typography>
+                  <Box display="flex" flexWrap="wrap" gap={1}>
+                    {searchKeywords.map((keyword, index) => (
+                      <Chip
+                        key={index}
+                        label={keyword}
+                        size="small"
+                        variant="outlined"
+                        color="info"
+                      />
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
+
+            {!loading && searched && results.length === 0 && !error && (
               <Alert severity="info">
-                {branding?.textos?.sin_resultados || 'No se encontraron resultados para tu búsqueda'}
+                {branding?.textos?.sin_resultados || 'No se encontraron resultados para tu búsqueda inteligente'}
               </Alert>
             )}
 
@@ -321,7 +378,10 @@ const SearchPage: React.FC = () => {
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Resultados ({results.length})
+                    🔍 Resultados de Búsqueda Inteligente ({results.length})
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Resultados analizados y clasificados por IA según relevancia
                   </Typography>
                   
                   <List>
@@ -333,8 +393,13 @@ const SearchPage: React.FC = () => {
                             flexDirection: 'column',
                             alignItems: 'stretch',
                             p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            mb: 2,
                             '&:hover': {
-                              backgroundColor: 'rgba(0,0,0,0.02)'
+                              backgroundColor: 'rgba(0,0,0,0.02)',
+                              borderColor: 'primary.main'
                             }
                           }}
                         >
@@ -363,8 +428,28 @@ const SearchPage: React.FC = () => {
                             </Box>
                           </Box>
 
-                          <Typography variant="body2" paragraph>
-                            {result.contenido_preview}...
+                          {/* Explicación de relevancia por IA */}
+                          <Alert severity="info" sx={{ mb: 2 }}>
+                            <Typography variant="body2">
+                              <strong>🤖 IA explica por qué es relevante:</strong> {result.relevance_explanation}
+                            </Typography>
+                          </Alert>
+
+                          {/* Resumen IA */}
+                          <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Description fontSize="small" />
+                              Resumen IA:
+                            </Typography>
+                            <Typography variant="body2">
+                              {result.resumen_ia}
+                            </Typography>
+                          </Box>
+
+                          {/* Contenido original preview */}
+                          <Typography variant="body2" paragraph sx={{ fontStyle: 'italic' }}>
+                            <strong>Contenido:</strong> {result.contenido_original.substring(0, 200)}
+                            {result.contenido_original.length > 200 && '...'}
                           </Typography>
 
                           <Box display="flex" flexWrap="wrap" gap={1} mb={1}>

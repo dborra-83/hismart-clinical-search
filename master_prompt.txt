@@ -65,17 +65,23 @@ HISmart es una aplicación web serverless marca blanca para hospitales que permi
 - JWT tokens con manejo seguro
 - Rutas protegidas por rol
 
-### ✅ Procesamiento de Datos Médicos
-- Parser CSV flexible para diferentes formatos hospitalarios
-- Validación de datos médicos
-- Detección de duplicados
-- Mapeo automático de columnas
+### ✅ Procesamiento Automático de CSV (ACTUALIZADO - Enero 2025)
+- **Trigger S3 Automático**: Procesamiento instantáneo al subir archivos
+- **Detección de Separadores**: Automática (coma, punto y coma, tabulaciones, pipes)
+- **Parser Inteligente**: Mapeo flexible de columnas médicas en español
+- **Validación Avanzada**: Datos obligatorios + detección de duplicados
+- **Soporte UTF-8**: Caracteres especiales del español (ñ, acentos)
+- **Estados en Tiempo Real**: Progreso de carga y procesamiento visible
 
-### ✅ Búsqueda Inteligente
-- Búsqueda de texto completo
-- Filtros por especialidad, médico, fechas
-- Puntuación de relevancia
-- Resultados paginados con preview
+### ✅ Búsqueda Inteligente con IA (NUEVO - Enero 2025)
+- **Análisis Contextual**: IA analiza consultas médicas en lenguaje natural
+- **Generación Automática de Keywords**: Extrae términos médicos relevantes
+- **Búsqueda Semántica**: Busca por significado médico, no solo texto literal
+- **Ranking Inteligente**: IA clasifica resultados por relevancia médica
+- **Explicaciones de Relevancia**: Cada resultado incluye por qué es relevante
+- **Filtros Avanzados**: Especialidad, médico, rango de fechas
+- **Preview Enriquecido**: Resumen IA + contenido + diagnósticos + medicamentos
+- **Endpoint**: POST /search - Completamente operativo con Bedrock Claude
 
 ### ✅ Análisis IA con Bedrock
 - **Análisis Completo**: Evaluación exhaustiva de notas
@@ -264,14 +270,17 @@ cd frontend && npm start
 
 ## Estado Actual del Proyecto
 
-### ✅ Completado
-- Infraestructura completa desplegable
-- Backend funcional con 3 Lambdas
-- Frontend completo en español
-- Autenticación con Cognito
-- Análisis IA con Bedrock
-- Sistema white-label
-- Documentación técnica
+### ✅ Completado (Enero 2025 - ACTUALIZADO)
+- **Infraestructura completa**: CDK v2 desplegado y operativo
+- **Backend funcional**: 4 Lambdas (simple-crud, csv-parser, ai-analysis, test)
+- **Frontend completo**: React en español con 6 páginas funcionales
+- **Upload real**: S3 presigned URLs + trigger automático
+- **Base de datos real**: DynamoDB con 24 notas clínicas de ejemplo
+- **Búsqueda IA**: Sistema inteligente con Bedrock Claude operativo
+- **CSV automático**: Detección de separadores + procesamiento instantáneo
+- **Análisis IA**: 4 tipos de análisis médico con Bedrock
+- **Sistema white-label**: Branding personalizable completo
+- **Sin errores**: 502 y CORS completamente resueltos
 
 ### 🔄 Listo para Despliegue
 - Script `deploy-dev.sh` probado
@@ -286,11 +295,49 @@ cd frontend && npm start
 4. Validar análisis IA en ambiente real
 5. Personalizar branding según institución
 
+## Implementación Técnica Detallada - Búsqueda Inteligente
+
+### Endpoint Principal: POST /search
+**URL**: `https://jcbisv3pj8.execute-api.us-east-1.amazonaws.com/prod/search`
+
+**Flujo de 3 Pasos Implementado:**
+```javascript
+1. analyzeSearchIntent(query) // IA genera keywords médicos
+2. performIntelligentSearch(keywords, filters) // Búsqueda DynamoDB optimizada
+3. rankSearchResults(query, results) // IA clasifica por relevancia
+```
+
+**Funciones IA Core Implementadas:**
+- `analyzeSearchIntent()`: Bedrock Claude analiza consulta médica
+- `performIntelligentSearch()`: Búsqueda con filtros optimizados DynamoDB
+- `rankSearchResults()`: Ranking inteligente con explicaciones
+- `invokeBedrockClaude()`: Cliente Bedrock helper
+
+**Frontend SearchPage.tsx:**
+- UI "Búsqueda Inteligente con IA"
+- Muestra keywords generadas automáticamente
+- Resultados con explicaciones de relevancia IA
+- Resumen inteligente de cada nota médica
+- Preview enriquecido con diagnósticos/medicamentos
+
+**Configuración Backend:**
+- Modelo: anthropic.claude-3-sonnet-20240229-v1:0
+- Timeout: 30 segundos para procesamiento IA
+- Memory: 512MB para manejo eficiente
+- Permisos Bedrock: bedrock:InvokeModel configurados
+
+**Optimizaciones Implementadas:**
+- Límite de 5 keywords para evitar límites DynamoDB (4KB FilterExpression)
+- Búsqueda case-insensitive en campos principales
+- Fallback inteligente cuando no hay coincidencias
+- CORS configurado para requests frontend
+
 ## Notas de Desarrollo
 
-- **Modelo IA**: Configurado para Claude 3 Sonnet (actualizable a Claude 4)
+- **Modelo IA**: Claude 3 Sonnet operativo en us-east-1
 - **Regiones AWS**: Optimizado para us-east-1 (configurable)
-- **Costos**: Estimado $20-50/mes para ambiente dev pequeño
+- **Costos**: Estimado $35-50/mes incluyendo Bedrock usage
+- **Estado**: Sistema completamente desplegado y funcional
 - **Escalabilidad**: Arquitectura serverless auto-escalable
 - **Compliance**: Preparado para HIPAA (requiere configuración adicional)
 

@@ -231,8 +231,10 @@ export class HiSmartSimpleStack extends cdk.Stack {
 
     const searchResource = api.root.addResource('search');
     searchResource.addMethod('POST', new apigateway.LambdaIntegration(crudApiFunction), {
-      authorizer: cognitoAuthorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    searchResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(crudApiFunction), {
+      authorizationType: apigateway.AuthorizationType.NONE
     });
 
     const analyzeResource = api.root.addResource('analyze');
